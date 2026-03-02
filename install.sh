@@ -1,10 +1,5 @@
 #!/bin/bash
 
-# ==============================================================================
-# The Ultimate "Fancy" Universal Linux Setup Script
-# ==============================================================================
-
-# Define colors for fancy output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -13,7 +8,6 @@ NC='\033[0m' # No Color
 
 LOG_FILE="/tmp/linux_setup.log"
 
-# Clear previous log file if it exists
 > "$LOG_FILE"
 
 echo -e "${BLUE}=======================================================${NC}"
@@ -21,31 +15,21 @@ echo -e "${GREEN}    Starting Ultimate Linux Setup Script    ${NC}"
 echo -e "${BLUE}=======================================================${NC}"
 echo -e "${YELLOW}Detailed logs are being saved to: $LOG_FILE${NC}\n"
 
-# Trap errors to exit gracefully
 trap 'echo -e "\n${RED}[ ERROR ] An unexpected error occurred. Check $LOG_FILE for details.${NC}"; exit 1' ERR
 set -e
 
-# Ask for the administrator password upfront
 sudo -v
 while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 
-# ------------------------------------------------------------------------------
-# THE MAGIC SPINNER FUNCTION
-# ------------------------------------------------------------------------------
-# This function takes a message and a command. It runs the command in the 
-# background, shows a spinner, and reports SUCCESS or FAILED.
 run_step() {
     local message="$1"
     shift
     
-    # Print the step message padded to 50 characters
     printf "${BLUE}::${NC} %-50s " "$message"
     
-    # Run the command in the background, redirecting output to the log file
     "$@" >> "$LOG_FILE" 2>&1 &
     local pid=$!
     
-    # The spinner animation
     local spinstr='|/-\'
     while kill -0 $pid 2>/dev/null; do
         local temp=${spinstr#?}
@@ -66,9 +50,6 @@ run_step() {
     fi
 }
 
-# ------------------------------------------------------------------------------
-# 1. OS DETECTION & BASE INSTALL
-# ------------------------------------------------------------------------------
 echo -e "\n${YELLOW}Phase 1: System Preparation${NC}"
 
 if command -v apt &> /dev/null; then
@@ -87,9 +68,6 @@ else
     exit 1
 fi
 
-# ------------------------------------------------------------------------------
-# 2. FLATPAK SETUP
-# ------------------------------------------------------------------------------
 echo -e "\n${YELLOW}Phase 2: Flatpak Application Setup${NC}"
 
 run_step "Adding Flathub Repository" sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
@@ -115,9 +93,6 @@ for app in "${FLATPAK_APPS[@]}"; do
     run_step "Installing $app_name" sudo flatpak install -y flathub "$app"
 done
 
-# ------------------------------------------------------------------------------
-# 3. APPIMAGE SETUP (FLUXER)
-# ------------------------------------------------------------------------------
 echo -e "\n${YELLOW}Phase 3: Portable Applications${NC}"
 
 run_step "Creating ~/Applications directory" mkdir -p ~/Applications
@@ -140,9 +115,6 @@ EOF
 }
 run_step "Creating Fluxer desktop shortcut" create_desktop_file
 
-# ------------------------------------------------------------------------------
-# WRAP UP
-# ------------------------------------------------------------------------------
 echo -e "\n${BLUE}=======================================================${NC}"
 echo -e "${GREEN}  Installation Complete! Zero Snaps Installed.  ${NC}"
 echo -e "${BLUE}=======================================================${NC}"
